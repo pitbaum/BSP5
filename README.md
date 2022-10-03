@@ -1,2 +1,2 @@
-# BSP5
-Neuroevolution of augmenting topologies
+# Neuroevolution of augmenting topologies
+Main git repository for Beachelor Semester Project 5
