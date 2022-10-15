@@ -10,7 +10,7 @@ class Agent_newtork:
     """
     #hardcoded topology
     model = torch.nn.Sequential(
-        nn.Linear(3, 3), #3 input layers
+        nn.Linear(3, 3), #3 inputs
         nn.LeakyReLU(), #leaky relu for also negative values
         nn.Linear(3, 1) #1 output, velocity
     )
@@ -50,14 +50,3 @@ class Root_network:
         #iterate over all parameters in the model and deactivate gradient
         for param in self.model.parameters():
             param.requires_grad = False
-
-
-#create a random set of neural networks
-agentsList = []
-numberOfAgents = 100
-for x in range(numberOfAgents):
-    #create n number of agents with random weights and fixed topology
-    agentsList.append(Root_network())
-
-#print summary of a model's looks
-summary(agentsList[0].model, input_size=(3, 3, 3))
