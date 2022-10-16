@@ -24,5 +24,5 @@ while generation_number < max_gen:
         index_of_rand = random.randint(current_index, len(survivor_population)-1)
         number_of_inheritors = random.randint(1,number_of_weights-1)
         inherited_indexes = []
-        for i in range(number_of_inheritors):
+        #for i in range(number_of_inheritors):
             
