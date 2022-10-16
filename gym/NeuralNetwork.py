@@ -36,7 +36,7 @@ class NeuralNetwork(nn.Module):
             # If module function is a linear layer
             if type(linear_net) == torch.nn.modules.linear.Linear:
                 print("Module Number changed and we are in deeper")
-                for node in linear_net:
+                for node in linear_net.weight:
                     for weight in node:
                         print(weight)
                 # TODO: Enumerate over weight bias list and set the values at the right place
