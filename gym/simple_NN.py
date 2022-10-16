@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torchsummary import summary
 import gym
-import matplotlib.pyplot as plt 
 import time
 
 
