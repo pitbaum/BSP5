@@ -14,10 +14,10 @@ class NeuralNetwork(nn.Module):
         # Linear network with Tanh, 2 input 1 output
         self.linear_network = nn.Sequential(
             nn.Linear(2, 16),
-            nn.Tanh(),
             nn.Linear(16, 16),
             nn.Tanh(),
             nn.Linear(16, 1),
+            nn.Tanh()
         )
         # freeze the learning of the newtork by deactivating gradient
         # iterate over all parameters in the model and deactivate gradient
@@ -51,7 +51,7 @@ def cross_parents(parent1, parent2):
     # iterate over parents weights and randomly pick some weights
     for linear_net1, linear_net2 in parent1, parent2:
         if type(linear_net1) == torch.nn.modules.linear.Linear and type(linear_net1) == torch.nn.modules.linear.Linear:
-            for node1, node2 in linear_net1.weight, linear_net2:
+            for node1, node2 in linear_net1.weight, linear_net2.weight:
                 for weight1, weight2 in node1, node2:
                     if flip_coin():
                         inheritance_boolean_list_child_1.append(weight1)
