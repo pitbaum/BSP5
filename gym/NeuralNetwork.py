@@ -31,16 +31,15 @@ class NeuralNetwork(nn.Module):
         return logits
 
     # Set weigths and bias to given parameter from parent
-    def inherite_weights_bias(self, weight_bias_list):
-        for linear_net in self.linear_network:
-            # If module function is a linear layer
-            if type(linear_net) == torch.nn.modules.linear.Linear:
-                print("Module Number changed and we are in deeper")
-                for node in linear_net.weight:
-                    for weight in node:
-                        print(weight)
-                # TODO: Enumerate over weight bias list and set the values at the right place
-
+    #By iterating over it like a 1D array
+    def inherite_weights(self, weight_list):
+        new_weight = 0
+        for layer_index, layer in enumerate(self.linear_network):
+            if type(layer) == torch.nn.modules.linear.Linear:
+                for input_index, input_weights in enumerate(layer.weight):
+                    for x in range(self.in_features[layer_index]):
+                        self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
+                        new_weight += 1
 
 # Take random weight values and return 2 new combination
 # Retrurns 1-D Array of future weights
