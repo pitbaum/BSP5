@@ -16,6 +16,7 @@ for step in range(num_steps):
     # take random action
     #action = agent.act(obs)
     action = env.action_space.sample()
+    print(env.action_space.sample())
     # apply the action
     obs, reward, done, info, empty = env.step(action)
     # Wait a bit before the next frame unless you want to see a crazy fast video
