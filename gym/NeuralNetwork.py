@@ -24,6 +24,7 @@ class NeuralNetwork(nn.Module):
         # Iterate over all parameters in the model and deactivate gradient
         for param in self.linear_network.parameters():
             param.requires_grad = False
+
     # Forward function through the network
     def forward(self, x):
         # Pass observation through forward function
@@ -32,10 +33,10 @@ class NeuralNetwork(nn.Module):
         # Return normal python float value instead of tensor
         floatValue = logits.item()
 
-        if(floatValue >= 0 and floatValue < 0.75):
+        if (floatValue >= 0 and floatValue < 0.75):
             floatValue = 0
         else:
-            if(floatValue >= 0.75 and floatValue < 1.25):
+            if (floatValue >= 0.75 and floatValue < 1.25):
                 floatValue = 1
             else:
                 floatValue = 2
@@ -52,54 +53,57 @@ class NeuralNetwork(nn.Module):
                         self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
                         new_weight += 1
 
+
 # Return either True or False randomly
 def flip_coin():
     return bool(getrandbits(1))
 
+
 class Evolution:
-  def __init__(self, max_gen, initial_size, survivor_size):
-      self.max_generations = max_gen
-      self.initial_population_size = initial_size
-      self.survivor_population_size = survivor_size
-      self.agent_list = []
-      self.ranked_population = []
+    def __init__(self, max_gen, initial_size, survivor_size):
+        self.max_generations = max_gen
+        self.initial_population_size = initial_size
+        self.survivor_population_size = survivor_size
+        self.agent_list = []
+        self.ranked_population = []
 
-  #create initial generation of random weigthed agents
-  def make_gen_0(self):
-      for amount in range(self.survivor_population_size):
-          self.agent_list.append(NeuralNetwork())
+    # create initial generation of random weigthed agents
+    def make_gen_0(self):
+        for amount in range(self.survivor_population_size):
+            self.agent_list.append(NeuralNetwork())
 
-  # sort the list population by its rank
-  # return sorted list of tuples (model,score)
-  def rank_population(population_rank_list):
-      return (sorted(population_rank_list, key=lambda x: x[1]))
+    # sort the list population by its rank
+    # return sorted list of tuples (model,score)
+    def rank_population(population_rank_list):
+        return (sorted(population_rank_list, key=lambda x: x[1]))
 
-  # Take random weight values and return 2 new combination
-  # Retrurns 1-D Array of future weights
-  def cross_parents(parent1, parent2):
-      # List of weights for the children
-      inheritance_boolean_list_child_1 = []
-      inheritance_boolean_list_child_2 = []
-      # iterate over parents weights and randomly pick some weights
-      for linear_net1, linear_net2 in parent1, parent2:
-          if type(linear_net1) == torch.nn.modules.linear.Linear and type(
-                  linear_net1) == torch.nn.modules.linear.Linear:
-              for node1, node2 in linear_net1.weight, linear_net2.weight:
-                  for weight1, weight2 in node1, node2:
-                      if flip_coin():
-                          inheritance_boolean_list_child_1.append(weight1)
-                          inheritance_boolean_list_child_2.append(weight2)
-                      else:
-                          inheritance_boolean_list_child_1.append(weight2)
-                          inheritance_boolean_list_child_2.append(weight1)
+    # Take random weight values and return 2 new combination
+    # Retrurns 1-D Array of future weights
+    def cross_parents(parent1, parent2):
+        # List of weights for the children
+        inheritance_boolean_list_child_1 = []
+        inheritance_boolean_list_child_2 = []
+        # iterate over parents weights and randomly pick some weights
+        for linear_net1, linear_net2 in parent1, parent2:
+            if type(linear_net1) == torch.nn.modules.linear.Linear and type(
+                    linear_net1) == torch.nn.modules.linear.Linear:
+                for node1, node2 in linear_net1.weight, linear_net2.weight:
+                    for weight1, weight2 in node1, node2:
+                        if flip_coin():
+                            inheritance_boolean_list_child_1.append(weight1)
+                            inheritance_boolean_list_child_2.append(weight2)
+                        else:
+                            inheritance_boolean_list_child_1.append(weight2)
+                            inheritance_boolean_list_child_2.append(weight1)
 
-      return (inheritance_boolean_list_child_1, inheritance_boolean_list_child_2)
+        return (inheritance_boolean_list_child_1, inheritance_boolean_list_child_2)
+
 
 p1 = Evolution(100, 100, 50)
 
 for index in range(p1.max_generations):
     # At first iteration set gen_0
-    if(index == 0):
+    if (index == 0):
         p1.make_gen_0()
 
     # Select the current rounds agent
