@@ -1,3 +1,4 @@
+import random
 from random import getrandbits
 import torch
 from torch import nn
@@ -69,22 +70,27 @@ class Evolution:
 
     # create initial generation of random weigthed agents
     def make_gen_0(self):
-        for amount in range(self.survivor_population_size):
+        for amount in range(self.initial_population_size):
             self.agent_list.append(NeuralNetwork())
 
     # sort the list population by its rank
     # return sorted list of tuples (model,score)
-    def rank_population(population_rank_list):
-        return (sorted(population_rank_list, key=lambda x: x[1]))
+    def rank_population(self, population_rank_list):
+        self.ranked_population = (sorted(population_rank_list, key=lambda x: x[1]))
+        self.agent_list.clear()
+        for obj in self.ranked_population[:self.survivor_population_size]:
+            self.agent_list.append(obj[0])
+
 
     # Take random weight values and return 2 new combination
     # Retrurns 1-D Array of future weights
-    def cross_parents(parent1, parent2):
+    def cross_parents(self, parent1, parent2):
         # List of weights for the children
         inheritance_boolean_list_child_1 = []
         inheritance_boolean_list_child_2 = []
+        print("this is a layer that throws an error", parent1.linear_network)
         # iterate over parents weights and randomly pick some weights
-        for linear_net1, linear_net2 in parent1, parent2:
+        for linear_net1, linear_net2 in parent1.modules(), parent2.modules():
             if type(linear_net1) == torch.nn.modules.linear.Linear and type(
                     linear_net1) == torch.nn.modules.linear.Linear:
                 for node1, node2 in linear_net1.weight, linear_net2.weight:
@@ -100,6 +106,7 @@ class Evolution:
 
 
 p1 = Evolution(100, 100, 50)
+score_list = []
 
 for index in range(p1.max_generations):
     # At first iteration set gen_0
@@ -108,10 +115,12 @@ for index in range(p1.max_generations):
 
     # Select the current rounds agent
     agent = p1.agent_list[index]
+    # Set score achieved to 0
+    maxScore = -11111111
 
     # Run the game for every agent and get their scores
     # Render mode already given in the make process.
-    env = gym.make('MountainCar-v0', render_mode="human")
+    env = gym.make('MountainCar-v0')
 
     # Number of steps you run the agent for
     num_steps = 1500
@@ -126,9 +135,26 @@ for index in range(p1.max_generations):
         action = agent(obs)
         # apply the action
         obs = env.step(action)
+        # Update the furthest the car came on the x axis
+        if maxScore < obs[0][0]:
+            maxScore = obs[0][0]
         # If the epsiode is up, then start another one
         if obs[2]:
             env.reset()
 
     # Close the env
     env.close()
+    score_list.append((agent, maxScore))
+
+p1.rank_population(score_list)
+
+# stock up the population by crossing random survivors with each other
+while p1.initial_population_size >= len(p1.agent_list):
+    parent1 = random.randint(0, (p1.survivor_population_size-1))
+    parent2 = random.randint(0, (p1.survivor_population_size-1))
+    print(p1.agent_list[parent1])
+    (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
+    p1.agent_list.append(NeuralNetwork().inherite_weights(child1_weights))
+    p1.agent_list.append(NeuralNetwork().inherite_weights(child2_weights))
+
+print(len(p1.agent_list))
