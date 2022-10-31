@@ -50,6 +50,7 @@ class NeuralNetwork(nn.Module):
         for layer_index, layer in enumerate(self.linear_network):
             if type(layer) == torch.nn.modules.linear.Linear:
                 for input_index, input_weights in enumerate(layer.weight):
+                    print("came here wow impressive")
                     for x in range(self.in_features[layer_index]):
                         self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
                         new_weight += 1
@@ -81,20 +82,18 @@ class Evolution:
         for obj in self.ranked_population[:self.survivor_population_size]:
             self.agent_list.append(obj[0])
 
-
     # Take random weight values and return 2 new combination
     # Retrurns 1-D Array of future weights
     def cross_parents(self, parent1, parent2):
         # List of weights for the children
         inheritance_boolean_list_child_1 = []
         inheritance_boolean_list_child_2 = []
-        print("this is a layer that throws an error", parent1.linear_network)
         # iterate over parents weights and randomly pick some weights
-        for linear_net1, linear_net2 in parent1.modules(), parent2.modules():
+        for linear_net1, linear_net2 in zip(parent1.linear_network, parent2.linear_network):
             if type(linear_net1) == torch.nn.modules.linear.Linear and type(
-                    linear_net1) == torch.nn.modules.linear.Linear:
-                for node1, node2 in linear_net1.weight, linear_net2.weight:
-                    for weight1, weight2 in node1, node2:
+                    linear_net2) == torch.nn.modules.linear.Linear:
+                for node1, node2 in zip(linear_net1.weight, linear_net2.weight):
+                    for weight1, weight2 in zip(node1, node2):
                         if flip_coin():
                             inheritance_boolean_list_child_1.append(weight1)
                             inheritance_boolean_list_child_2.append(weight2)
@@ -150,9 +149,8 @@ p1.rank_population(score_list)
 
 # stock up the population by crossing random survivors with each other
 while p1.initial_population_size >= len(p1.agent_list):
-    parent1 = random.randint(0, (p1.survivor_population_size-1))
-    parent2 = random.randint(0, (p1.survivor_population_size-1))
-    print(p1.agent_list[parent1])
+    parent1 = random.randint(0, (p1.survivor_population_size - 1))
+    parent2 = random.randint(0, (p1.survivor_population_size - 1))
     (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
     p1.agent_list.append(NeuralNetwork().inherite_weights(child1_weights))
     p1.agent_list.append(NeuralNetwork().inherite_weights(child2_weights))
