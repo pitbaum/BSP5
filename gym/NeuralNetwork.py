@@ -15,9 +15,11 @@ class NeuralNetwork(nn.Module):
         # Linear network with Tanh, 2 input 1 output
         # No grad and no bias
         self.linear_network = nn.Sequential(
-            nn.Linear(2, 16, False),
-            nn.Linear(16, 16, False),
+            nn.Linear(2, 64, False),
+            nn.Linear(64, 32, False),
             nn.ReLU(),
+            nn.Linear(32,32, False),
+            nn.Linear(32,16, False),
             nn.Linear(16, 1, False),
             nn.ReLU()
         )
@@ -50,8 +52,7 @@ class NeuralNetwork(nn.Module):
         for layer_index, layer in enumerate(self.linear_network):
             if type(layer) == torch.nn.modules.linear.Linear:
                 for input_index, input_weights in enumerate(layer.weight):
-                    print("came here wow impressive")
-                    for x in range(self.in_features[layer_index]):
+                    for x in range(self.linear_network[layer_index].in_features):
                         self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
                         new_weight += 1
 
@@ -77,7 +78,7 @@ class Evolution:
     # sort the list population by its rank
     # return sorted list of tuples (model,score)
     def rank_population(self, population_rank_list):
-        self.ranked_population = (sorted(population_rank_list, key=lambda x: x[1]))
+        self.ranked_population = sorted(population_rank_list, key=lambda tup: tup[1], reverse=True)
         self.agent_list.clear()
         for obj in self.ranked_population[:self.survivor_population_size]:
             self.agent_list.append(obj[0])
@@ -106,53 +107,59 @@ class Evolution:
 
 p1 = Evolution(100, 100, 50)
 score_list = []
+while True:
+    if p1.ranked_population != []:
+        print(p1.ranked_population[0][1])
+    score_list = []
+    p1.ranked_population = []
+    for index in range(p1.max_generations):
+        # At first iteration set gen_0
+        if (index == 0):
+            p1.make_gen_0()
 
-for index in range(p1.max_generations):
-    # At first iteration set gen_0
-    if (index == 0):
-        p1.make_gen_0()
+        # Select the current rounds agent
+        agent = p1.agent_list[index]
+        # Set score achieved to 0
+        maxScore = -11111111
 
-    # Select the current rounds agent
-    agent = p1.agent_list[index]
-    # Set score achieved to 0
-    maxScore = -11111111
+        # Run the game for every agent and get their scores
+        # Render mode already given in the make process.
+        env = gym.make('MountainCar-v0')
 
-    # Run the game for every agent and get their scores
-    # Render mode already given in the make process.
-    env = gym.make('MountainCar-v0')
+        # Number of steps you run the agent for
+        num_steps = 500
 
-    # Number of steps you run the agent for
-    num_steps = 1500
+        obs = env.reset()
+        input_space = obs
+        output_space = env.action_space
 
-    obs = env.reset()
-    input_space = obs
-    output_space = env.action_space
+        for step in range(num_steps):
+            # take action
+            # action = agent.act(obs)
+            action = agent(obs)
+            # apply the action
+            obs = env.step(action)
+            # Update the furthest the car came on the x axis
+            if maxScore < obs[0][0]:
+                maxScore = obs[0][0]
+            # If the epsiode is up, then start another one
+            if obs[2]:
+                env.reset()
 
-    for step in range(num_steps):
-        # take action
-        # action = agent.act(obs)
-        action = agent(obs)
-        # apply the action
-        obs = env.step(action)
-        # Update the furthest the car came on the x axis
-        if maxScore < obs[0][0]:
-            maxScore = obs[0][0]
-        # If the epsiode is up, then start another one
-        if obs[2]:
-            env.reset()
+        # Close the env
+        env.close()
+        score_list.append((agent, maxScore))
 
-    # Close the env
-    env.close()
-    score_list.append((agent, maxScore))
+    p1.rank_population(score_list)
 
-p1.rank_population(score_list)
-
-# stock up the population by crossing random survivors with each other
-while p1.initial_population_size >= len(p1.agent_list):
-    parent1 = random.randint(0, (p1.survivor_population_size - 1))
-    parent2 = random.randint(0, (p1.survivor_population_size - 1))
-    (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
-    p1.agent_list.append(NeuralNetwork().inherite_weights(child1_weights))
-    p1.agent_list.append(NeuralNetwork().inherite_weights(child2_weights))
-
-print(len(p1.agent_list))
+    # stock up the population by crossing random survivors with each other
+    while p1.initial_population_size >= len(p1.agent_list):
+        parent1 = random.randint(0, (p1.survivor_population_size - 1))
+        parent2 = random.randint(0, (p1.survivor_population_size - 1))
+        (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
+        instance1 = NeuralNetwork()
+        instance2 = NeuralNetwork()
+        instance1.inherite_weights(child1_weights)
+        instance2.inherite_weights(child2_weights)
+        p1.agent_list.append(instance1)
+        p1.agent_list.append(instance2)
