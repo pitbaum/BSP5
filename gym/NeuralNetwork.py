@@ -15,10 +15,7 @@ class NeuralNetwork(nn.Module):
         # Linear network with Tanh, 2 input 1 output
         # No grad and no bias
         self.linear_network = nn.Sequential(
-            nn.Linear(2, 64, False),
-            nn.Linear(64, 32, False),
-            nn.ReLU(),
-            nn.Linear(32, 32, False),
+            nn.Linear(2, 32, False),
             nn.Linear(32, 16, False),
             nn.Linear(16, 1, False),
             nn.ReLU()
@@ -60,7 +57,13 @@ class NeuralNetwork(nn.Module):
                         if not mutate:
                             self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
                         else:
-                            mutated_weight = ((brother_weights[new_weight] + weight_list[new_weight]) ** 2) ** 0.5
+                            if flip_coin():
+                                if flip_coin():
+                                    mutated_weight = weight_list[new_weight] + weight_list[new_weight]*(randint(10,80)*0.01)
+                                else:
+                                    mutated_weight = weight_list[new_weight] - weight_list[new_weight]*(randint(10,80)*0.01)
+                            else:
+                                mutated_weight = weight_list[new_weight] + 0.1
                             self.linear_network[layer_index].weight[input_index, x] = mutated_weight
                         new_weight += 1
 
@@ -121,7 +124,7 @@ class Evolution:
         return (inheritance_boolean_list_child_1, inheritance_boolean_list_child_2)
 
 
-p1 = Evolution(100, 100, 50)
+p1 = Evolution(150, 500, 50)
 
 
 # Get a better random distribution at the beginning
@@ -137,18 +140,22 @@ def weights_init_uniform_rule(m):
 
 score_list = []
 loop_count = 0
+
+# Main program loop
 while True:
     if p1.ranked_population != []:
-        for i in range (len(p1.ranked_population)-50):
-            print(p1.ranked_population[i][1])
+        for i in range (len(p1.ranked_population)-102):
+            print(i,":", p1.ranked_population[i][1])
         print("end of list")
         loop_count += 1
     score_list = []
     p1.ranked_population = []
-    for index in range(p1.max_generations):
-        # At first iteration set gen_0
-        if (index == 0):
-            p1.make_gen_0()
+    # At first iteration set gen_0
+    if (loop_count == 0):
+        p1.make_gen_0()
+
+    # Give every agent a round to play the game
+    for index in range(len(p1.agent_list)):
 
         # Select the current rounds agent
         agent = p1.agent_list[index]
@@ -160,12 +167,13 @@ while True:
         env = gym.make('MountainCar-v0')
 
         # Number of steps you run the agent for
-        num_steps = 500
+        num_steps = 200
 
         obs = env.reset(seed=0)
         input_space = obs
         output_space = env.action_space
 
+        # Game loop for one game
         for step in range(num_steps):
             # take action
             # action = agent.act(obs)
@@ -186,20 +194,15 @@ while True:
         score_list.append((agent, maxScore))
 
     p1.rank_population(score_list)
-    if loop_count > 50:
+    if loop_count > 50 and p1.mutation_prop > 33:
         p1.mutation_prop -= 1
         print("mutation chance set to:", p1.mutation_prop)
     mutation_prop = p1.mutation_prop
-    # stock up the population by crossing random survivors with each other
-    while p1.initial_population_size >= len(p1.agent_list):
-        if loop_count < p1.survivor_population_size-1:
-            parent1 = randint(0, (loop_count))
-            print("parent index = ", parent1)
-            parent2 = randint(0, (loop_count))
-            print("parent index = ", parent2)
-        else:
-            parent1 = randint(0, (p1.survivor_population_size - 1))
-            parent2 = randint(0, (p1.survivor_population_size - 1))
+
+    # stock up the population by crossing random survivors with each other until a certain threshold is met
+    while p1.max_generations >= len(p1.agent_list):
+        parent1 = randint(0, (p1.survivor_population_size - 1))
+        parent2 = randint(0, (p1.survivor_population_size - 1))
         (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
         instance1 = NeuralNetwork()
         instance2 = NeuralNetwork()
