@@ -24,9 +24,6 @@ class NeuralNetwork(nn.Module):
         # Iterate over all parameters in the model and deactivate gradient
         for param in self.linear_network.parameters():
             param.requires_grad = False
-            # takes in a module and applies the specified weight initialization
-
-        #self.linear_network.apply(weights_init_uniform_rule)
 
     # Forward function through the network
     def forward(self, x):
@@ -35,7 +32,7 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_network(torch.tensor(x[0]))
         # Return normal python float value instead of tensor
         floatValue = logits.item()
-        #print(floatValue)
+        # print(floatValue)
         if (floatValue >= -0.33 and floatValue <= 0.33):
             floatValue = 0
         else:
@@ -59,9 +56,11 @@ class NeuralNetwork(nn.Module):
                         else:
                             if flip_coin():
                                 if flip_coin():
-                                    mutated_weight = weight_list[new_weight] + weight_list[new_weight]*(randint(10,80)*0.01)
+                                    mutated_weight = weight_list[new_weight] + weight_list[new_weight] * (
+                                                randint(10, 80) * 0.01)
                                 else:
-                                    mutated_weight = weight_list[new_weight] - weight_list[new_weight]*(randint(10,80)*0.01)
+                                    mutated_weight = weight_list[new_weight] - weight_list[new_weight] * (
+                                                randint(10, 80) * 0.01)
                             else:
                                 mutated_weight = weight_list[new_weight] + 0.1
                             self.linear_network[layer_index].weight[input_index, x] = mutated_weight
@@ -125,35 +124,27 @@ class Evolution:
 
 
 p1 = Evolution(150, 200, 50)
-
-
-# Get a better random distribution at the beginning
-def weights_init_uniform_rule(m):
-    classname = m.__class__.__name__
-    # for every Linear layer in a model..
-    if classname.find('Linear') != -1:
-        # get the number of the inputs
-        n = m.in_features
-        y = 1.0 / n ** 0.5
-        m.weight.data.uniform_(-y, y)
-
-
 score_list = []
 loop_count = 0
 
 # Main program loop
 while True:
     if p1.ranked_population != []:
-        for i in range (len(p1.ranked_population)-102):
-            print(i,":", p1.ranked_population[i][1])
+        for i in range(len(p1.ranked_population) - 102):
+            print(i, ":", p1.ranked_population[i][1])
         print("end of list")
         loop_count += 1
+        if p1.ranked_population[0][1] >= 0.5:
+            break
     score_list = []
     p1.ranked_population = []
     # At first iteration set gen_0
     if (loop_count == 0):
         p1.make_gen_0()
 
+    # Run the game for every agent and get their scores
+    # Render mode already given in the make process.
+    env = gym.make('MountainCar-v0')
     # Give every agent a round to play the game
     for index in range(len(p1.agent_list)):
 
@@ -162,9 +153,6 @@ while True:
         # Set score achieved to 0
         maxScore = -11111111
         seed = 0
-        # Run the game for every agent and get their scores
-        # Render mode already given in the make process.
-        env = gym.make('MountainCar-v0')
 
         # Number of steps you run the agent for
         num_steps = 200
@@ -179,7 +167,6 @@ while True:
             # action = agent.act(obs)
             action = agent(obs)
 
-
             # apply the action
             obs = env.step(action)
             # Update the furthest the car came on the x axis
@@ -189,9 +176,10 @@ while True:
             if obs[2]:
                 env.reset(seed=0)
 
-        # Close the env
-        env.close()
         score_list.append((agent, maxScore))
+
+    # Close the env
+    env.close()
 
     p1.rank_population(score_list)
     if loop_count > 50 and p1.mutation_prop > 33:
@@ -210,3 +198,20 @@ while True:
         instance2.inherite_weights(child2_weights, child1_weights, mutation_prop)
         p1.agent_list.append(instance1)
         p1.agent_list.append(instance2)
+
+""" Show the end result of the best agent that can reach the goal state"""
+final_agent = p1.ranked_population[0][0]
+print("came here")
+env = gym.make('MountainCar-v0', render_mode = "human")
+num_steps = 200
+obs = env.reset(seed=0)
+input_space = obs
+output_space = env.action_space
+
+# Game loop for one game
+for step in range(num_steps):
+    # take action
+    # action = agent.act(obs)
+    action = final_agent(obs)
+    # apply the action
+    obs = env.step(action)
