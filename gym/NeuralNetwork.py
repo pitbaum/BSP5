@@ -57,10 +57,10 @@ class NeuralNetwork(nn.Module):
                             if flip_coin():
                                 if flip_coin():
                                     mutated_weight = weight_list[new_weight] + weight_list[new_weight] * (
-                                                randint(10, 80) * 0.01)
+                                            randint(10, 80) * 0.01)
                                 else:
                                     mutated_weight = weight_list[new_weight] - weight_list[new_weight] * (
-                                                randint(10, 80) * 0.01)
+                                            randint(10, 80) * 0.01)
                             else:
                                 mutated_weight = weight_list[new_weight] + 0.1
                             self.linear_network[layer_index].weight[input_index, x] = mutated_weight
@@ -202,7 +202,7 @@ while True:
 """ Show the end result of the best agent that can reach the goal state"""
 final_agent = p1.ranked_population[0][0]
 print("came here")
-env = gym.make('MountainCar-v0', render_mode = "human")
+env = gym.make('MountainCar-v0', render_mode="human")
 num_steps = 200
 obs = env.reset(seed=0)
 input_space = obs
