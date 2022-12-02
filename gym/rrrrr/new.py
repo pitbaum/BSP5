@@ -1,13 +1,12 @@
 # Store the current max node id globally to make incremented ids for new nodes
 import random
 
-node_id_count = 3
-
 def getRandomWeight():
     return random.uniform(-2,2)
 
 class FeedForwardNetwork:
     def __init__(self):
+        self.node_id_count = 3
         # Set the first input node id 0 to be in the 1st layer index 0
         # No input nodes linked []
         self.input_x = Node(0, [], 0)
@@ -77,17 +76,36 @@ class FeedForwardNetwork:
         return result
 
 
-"""
+
     # Choose a random layer and a random node in it
     # Take a random in node from it and replace it
     # Put this node in the layer between the in and out node set in node to original weight, out node to 1
     # If there is no layer in between the nodes, make a new layer for it
     def mutate_add_node(self):
-        chosenLayer = np.random.randint(1, len(self.layerList) - 1)
-        outNode = np.random.randint(0, len(self.layerList[chosenLayer]))
-        inNode = np.random.randint(0, len(outNode.con_in))
-        # if inNode.layer_id+1 < outNode.layer_id:
+        # Choose a random layer index of the layers receiving input
+        chosenLayer = random.randint(2, 4)
+        # If the layer has no nodes, dont do anything. End of progrem
+        # If the layer is non empty:
+        if chosenLayer:
+            # Choose a random node from the layer
+            outNodeIndex = random.randint(0, len(self.layerList[chosenLayer]))
+            outNode = self.layerList[chosenLayer].get(outNodeIndex)
+            # Choose a random node from its input nodes
+            inNodeIndex = random.randint(0, len(outNode.con_in))
+            inNodeTuple = outNode.con_in[inNodeIndex]
+            inNode = self.allNodesDict.get(inNodeTuple[0])
+            # Get the connection weight
+            weight = inNodeTuple[1]
+            # Increase the max id of nodes in the program
+            self.node_id_count += 1
+            # Create a new node with the new max id, the (inNode.id,weight) of the in connection and the layer under the out node connection
+            newNode = Node(self.node_id_count,[(inNode.id,weight)],chosenLayer-1)
+            # Add the new node to the all nodes dict, that contains all existing nodes
+            self.allNodesDict.update({self.node_id_count:newNode})
+            # Change the inNode connection of the outNode at the selected place to the new (node.id,weight) with weight 1
+            outNode.con_in[inNodeIndex] = (self.node_id_count,1)
 
+"""
     # Choose a random layer and a random node in it
     # Choose a random node from the layer + 1
     # Add a connection from that node to the other and add a random weight to it
