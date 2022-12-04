@@ -86,12 +86,13 @@ class FeedForwardNetwork:
         chosenLayer = random.randint(2, 4)
         # If the layer has no nodes, dont do anything. End of progrem
         # If the layer is non empty:
-        if chosenLayer:
+        if self.layerList[chosenLayer]:
             # Choose a random node from the layer
-            outNodeIndex = random.randint(0, len(self.layerList[chosenLayer]))
-            outNode = self.layerList[chosenLayer].get(outNodeIndex)
+            outNodeIndex = random.randint(0, len(self.layerList[chosenLayer])-1)
+            outNodeKey = list(self.layerList[chosenLayer])[outNodeIndex]
+            outNode = self.layerList[chosenLayer].get(outNodeKey)
             # Choose a random node from its input nodes
-            inNodeIndex = random.randint(0, len(outNode.con_in))
+            inNodeIndex = random.randint(0, len(outNode.con_in)-1)
             inNodeTuple = outNode.con_in[inNodeIndex]
             inNode = self.allNodesDict.get(inNodeTuple[0])
             # Get the connection weight
@@ -104,6 +105,7 @@ class FeedForwardNetwork:
             self.allNodesDict.update({self.node_id_count:newNode})
             # Change the inNode connection of the outNode at the selected place to the new (node.id,weight) with weight 1
             outNode.con_in[inNodeIndex] = (self.node_id_count,1)
+
 
 """
     # Choose a random layer and a random node in it
@@ -141,3 +143,6 @@ x = 0.5
 y = 0.5
 testNet.__init__()
 print(testNet.forward_pass(x, y))
+print(testNet.allNodesDict)
+testNet.mutate_add_node()
+print(testNet.allNodesDict)
