@@ -21,7 +21,7 @@ class FeedForwardNetwork:
         self.output_node = Node(3, [(self.connector_node.id, getRandomWeight())], 4)
         # Create the input layer dict of nodes
         # Key node id, value = node
-        self.inputLayer = {self.input_x.id: self.input_x, self.input_y: self.input_y}
+        self.inputLayer = {self.input_x.id: self.input_x, self.input_y.id: self.input_y}
         # create the empty layer dict for layer id 1
         self.layer1 = {}
         # Create the layer with id 2 and connector node inside
@@ -115,7 +115,7 @@ class FeedForwardNetwork:
         else:
             inLayer = chosenLayer-1
         # Choose the node that will be inputted and get its id
-        inNodeIndex = random.randint(0,len(self.layerList[inLayer]))
+        inNodeIndex = random.randint(0,len(self.layerList[inLayer])-1)
         inNodeKey = list(self.layerList[inLayer])[inNodeIndex]
         # If the layer above it is empty, take the layer above that for outputting
         if self.layerList[chosenLayer+1] == {}:
@@ -123,7 +123,7 @@ class FeedForwardNetwork:
         else:
             outLayer = chosenLayer+1
         # Choose the output node and get its id
-        outNodeIndex = random.randint(0,len(self.layerList[outLayer]))
+        outNodeIndex = random.randint(0,len(self.layerList[outLayer])-1)
         outNodeKey = list(self.layerList[outLayer])[outNodeIndex]
         # Create a new node with a new id at the given layer, with in node and a random weight
         self.node_id_count += 1
@@ -171,5 +171,6 @@ y = 0.5
 testNet.__init__()
 print(testNet.forward_pass(x, y))
 print(testNet.allNodesDict)
-testNet.mutate_add_node()
+testNet.add_node()
 print(testNet.allNodesDict)
+print(testNet.forward_pass(x,y))
