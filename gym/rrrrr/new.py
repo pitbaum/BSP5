@@ -75,8 +75,6 @@ class FeedForwardNetwork:
         # Return value of output node
         return result
 
-
-
     # Choose a random layer and a random node in it
     # Take a random in node from it and replace it
     # Put this node in the layer between the in and out node set in node to original weight, out node to 1
@@ -106,6 +104,35 @@ class FeedForwardNetwork:
             # Change the inNode connection of the outNode at the selected place to the new (node.id,weight) with weight 1
             outNode.con_in[inNodeIndex] = (self.node_id_count,1)
 
+    # Since the program is restircted to layers, it needs to be implemented that you can also add a node
+    # Without putting it between two already existing nodes
+    def add_node(self):
+        # Put a random new node in either layer 1,2 or 3
+        chosenLayer = random.randint(1,3)
+        # If the layer under it is empty, take the layer under that one
+        if self.layerList[chosenLayer-1] == {}:
+            inLayer = chosenLayer-2
+        else:
+            inLayer = chosenLayer-1
+        # Choose the node that will be inputted and get its id
+        inNodeIndex = random.randint(0,len(self.layerList[inLayer]))
+        inNodeKey = list(self.layerList[inLayer])[inNodeIndex]
+        # If the layer above it is empty, take the layer above that for outputting
+        if self.layerList[chosenLayer+1] == {}:
+            outLayer = chosenLayer+2
+        else:
+            outLayer = chosenLayer+1
+        # Choose the output node and get its id
+        outNodeIndex = random.randint(0,len(self.layerList[outLayer]))
+        outNodeKey = list(self.layerList[outLayer])[outNodeIndex]
+        # Create a new node with a new id at the given layer, with in node and a random weight
+        self.node_id_count += 1
+        newNode = Node(self.node_id_count,[(inNodeKey,getRandomWeight())],chosenLayer)
+        # Put the new node in the layer and in the nodes dict
+        self.layerList[chosenLayer].update({newNode.id:newNode})
+        self.allNodesDict.update({newNode.id:newNode})
+        # Put the new nodes connection in the in connections of the selected output node with random weight
+        self.allNodesDict.get(outNodeKey).con_in.append((newNode.id,getRandomWeight()))
 
 """
     # Choose a random layer and a random node in it
