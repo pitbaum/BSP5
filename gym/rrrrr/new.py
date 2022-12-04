@@ -134,13 +134,31 @@ class FeedForwardNetwork:
         # Put the new nodes connection in the in connections of the selected output node with random weight
         self.allNodesDict.get(outNodeKey).con_in.append((newNode.id,getRandomWeight()))
 
-"""
+
     # Choose a random layer and a random node in it
     # Choose a random node from the layer + 1
     # Add a connection from that node to the other and add a random weight to it
-    # def mutate_add_connection(self):
-"""
-
+    def mutate_add_connection(self):
+        # choose a random layer index
+        chosenLayer = random.randint(1, 4)
+        if self.layerList[chosenLayer]:
+            inNodeIndex = random.randint(0, len(self.layerList[chosenLayer]) - 1)
+            inNodeKey = list(self.layerList[chosenLayer])[inNodeIndex]
+            outNodeIndex = random.randint(0,len(self.layerList[chosenLayer-1])-1)
+            outNodeKey = list(self.layerList[chosenLayer-1])[outNodeIndex]
+            inNode = self.allNodesDict.get(inNodeKey)
+            exists = False
+            for id in inNode.con_in:
+                isId = True
+                for value in id:
+                    if isId:
+                        if value == id:
+                            exists = True
+                        isId = False
+                    else:
+                        isId = True
+            if not exists:
+                inNode.con_in.append((outNodeKey,getRandomWeight()))
 
 # A single node
 # The nodes unique id number to identify it
