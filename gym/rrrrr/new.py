@@ -1,8 +1,12 @@
 # Store the current max node id globally to make incremented ids for new nodes
 import random
+import math
 
 def getRandomWeight():
     return random.uniform(-2,2)
+
+def getTanh(x):
+    return math.tan(x)
 
 class FeedForwardNetwork:
     def __init__(self):
@@ -73,7 +77,8 @@ class FeedForwardNetwork:
         for node in self.allNodesDict.values():
             node.setValueToZero()
         # Return value of output node
-        return result
+        # Put the value through tanh function before returning it
+        return getTanh(result)
 
     # Choose a random layer and a random node in it
     # Take a random in node from it and replace it
