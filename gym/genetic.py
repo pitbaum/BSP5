@@ -2,7 +2,7 @@ import gym
 import random
 import math
 
-print("Start of prgram")
+print("Start of program")
 
 def getRandomWeight():
     return random.uniform(-2,2)
@@ -181,30 +181,6 @@ class FeedForwardNetwork:
         self.layerList[chosenLayer].update({newNode.id: newNode})
         self.allNodesDict.update({newNode.id: newNode})
 
-    # Set weigths to the given ones from the parent
-    # By iterating over it like a 1D array
-    def inherite_weights(self, weight_list, brother_weights, chance):
-        new_weight = 0
-        for layer_index, layer in enumerate(self.linear_network):
-            if type(layer) == torch.nn.modules.linear.Linear:
-                for input_index, input_weights in enumerate(layer.weight):
-                    for x in range(self.linear_network[layer_index].in_features):
-                        mutate = mutation_chance(chance)
-                        if not mutate:
-                            self.linear_network[layer_index].weight[input_index, x] = weight_list[new_weight]
-                        else:
-                            if flip_coin():
-                                if flip_coin():
-                                    mutated_weight = weight_list[new_weight] + weight_list[new_weight] * (
-                                            random.randint(10, 80) * 0.01)
-                                else:
-                                    mutated_weight = weight_list[new_weight] - weight_list[new_weight] * (
-                                            random.randint(10, 80) * 0.01)
-                            else:
-                                mutated_weight = weight_list[new_weight] + 0.1
-                            self.linear_network[layer_index].weight[input_index, x] = mutated_weight
-                        new_weight += 1
-
     # Iterate over all layers and change the node normalized ids to be strictly ascending by index
     # Change the values for the  access of the normalized all nodes dict
     def normalize_ids(self):
@@ -228,12 +204,20 @@ class Node:
         # Normalized id
         self.normalized_id = -1
         # tuple (in node id, weight)
+        # Make into dictionary from list
         self.con_in = in_list
         # layer number
         self.layer_id = layer_id
         # value of the node
         self.value = 0
 
+    def get_norm_con_dict(self, allNodesDict):
+        new_dict = {}
+        for key in self.con_in:
+            weight = self.con_in.get(key)
+            new_key = allNodesDict.get(key).normalized_id
+            new_dict.update({new_key:weight})
+        return new_dict
     # Function to sum the current value with the connection of the connected node times its weight to it
     def addToValue(self, value, weight):
         self.value += value * weight
@@ -258,6 +242,18 @@ print(testNet.forward_pass(x,y))
 def flip_coin():
     return bool(random.getrandbits(1))
 
+def mutate(weight,chance):
+    mutate = mutation_chance(chance)
+    if not mutate:
+        return weight
+    else:
+        if flip_coin():
+            if flip_coin():
+                return weight + weight * (random.randint(10, 80) * 0.01)
+            else:
+                return weight - weight * (random.randint(10, 80) * 0.01)
+        else:
+            return (weight + 0.1)
 
 def mutation_chance(chance):
     if random.randint(1, 100) > chance:
@@ -289,9 +285,9 @@ class Evolution:
         for obj in self.ranked_population[:self.survivor_population_size]:
             self.agent_list.append(obj[0])
 
-    # Take random weight values and return 2 new combination
-    # Retrurns 1-D Array of future weights
-    def cross_parents(self, parent1, parent2):
+    # Take the 2 parents and return 2 children with mutated inherited weights and max topology of (parent1,parent2)
+    # Returns (child1,child2)
+    def cross_parents(self, parent1, parent2, chance):
         child1 = FeedForwardNetwork()
         child2 = FeedForwardNetwork()
 
@@ -299,73 +295,54 @@ class Evolution:
         parent2.normalize_ids()
 
         currentLayer = -1
-        currentNodeIndex = 0
+        currentNormNodeId = 0
         for layer in parent1.layerList:
             currentLayer += 1
             # As long as there are still some nodes in the layer of one parent that you didnt iterate through
-            while currentNodeIndex <= len(parent1.layerList[currentLayer]) and currentNodeIndex <= len(parent2.layerList[currentLayer]):
+            while currentNormNodeId <= len(parent1.layerList[currentLayer]) or currentNormNodeId <= len(parent2.layerList[currentLayer]):
                 child1.add_node(currentLayer)
                 child2.add_node(currentLayer)
+                currentNodeId1 = None
+                currentNodeId2 = None
+                if currentNormNodeId <= len(parent1.layerList[currentLayer]):
+                    currentNodeId1 = parent1.NormalizedNodesDict.get(currentNormNodeId).id
+                if currentNormNodeId <= len(parent1.layerList[currentLayer]):
+                    currentNodeId2 = parent1.NormalizedNodesDict.get(currentNormNodeId).id
                 # If this node exists for parent1 and parent2
-                if parent1.layerList[currentLayer].get(currentNodeIndex) and parent2.layerList[currentLayer].get(currentNodeIndex):
-                    node1 = parent1.layerList[currentLayer].get(currentNodeIndex)
-                    node2 = parent2.layerList[currentLayer].get(currentNodeIndex)
-
-                    # Go over the union of keys in the con_in dict
-                    # If a connection is mutual, give child1 one weight and child2 the other
-                    # If only parent1 has the connection, give both children the same connection
-                    # If only parent2 has the connection, give both children the same connection
-
-                    # Mutate weights if applicable
-                    # Add the node.nomr_id: weight to the childrens input dicts in that node
-
-                # IF this node only exists for parent1:
-                    # Go over all keys in con in dict for parent1
-                    # Give both children the same weight
-                    # Mutate if applicable
-                    # Add the node.norm_id: weight to the children
-
-                # If the node only exists for parent2:
-                    # Go over all keys in con in dict for parent2
-                    # Give both children the same weight
-                    # Mutate if applicable
-                    # Add the node.norm_id: weight to the children
-
-        # Return finished end children with weights and connections
+                if parent1.layerList[currentLayer].get(currentNodeId1) and parent2.layerList[currentLayer].get(currentNodeId2):
+                    node1 = parent1.layerList[currentLayer].get(currentNodeId1)
+                    node2 = parent2.layerList[currentLayer].get(currentNodeId2)
+                    # Create the dict of normed ids with in weights
+                    normInDict1 = node1.get_norm_con_dict(node1.allNodesDict)
+                    normInDict2 = node2.get_norm_con_dict(node2.allNodesDict)
+                    # Go over all connections in parent1, add all necessary/possible mutual or parent1 connections and delete them from the dict(s)
+                    # mutate weights before putting them in the childrens con in dicts if applicable
+                    for key1 in normInDict1:
+                        # If a connection is mutual, give child1 one weight and child2 the other
+                        if normInDict1.get(key1) and normInDict2.get(key1):
+                            if flip_coin():
+                                child1.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict1.get(key1),chance)})
+                                child2.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict2.get(key1),chance)})
+                            else:
+                                child1.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict2.get(key1),chance)})
+                                child2.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict1.get(key1),chance)})
+                            # Delete the reference in the norm dict to not iterate over it again
+                            normInDict1.pop(key1,None)
+                            normInDict2.pop(key1,None)
+                        # If only parent1 has the connection, give both children the same connection
+                        elif normInDict1.get(key1):
+                            child1.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict1.get(key1),chance)})
+                            child2.allNodesDict.get(key1).con_in.update({key1:mutate(normInDict1.get(key1),chance)})
+                            normInDict1.pop(key1,None)
+                    # Go over parent2 with the remaining keys and add the non mutual one's that remain
+                    for key2 in normInDict2:
+                        child1.allNodesDict.get(key2).con_in.update({key2:mutate(normInDict2.get(key2),chance)})
+                        child2.allNodesDict.get(key2).con_in.update({key2:mutate(normInDict2.get(key2),chance)})
+                        normInDict2.pop(key2,None)
+                    # Both dicts should be empty by now since all connections were made and deleted
+                    if normInDict1 == {} and normInDict2 == {}:
+                        print("Success of joining the genes")
         return (child1,child2)
-
-                    # For the max of the len of inputs of that node for both parents
-                    for con_in_len in range(max(len(node1.con_in),len(node2.con_in))):
-                        # If max is parent 1
-                        if node1.con_in > node2.con_in:
-
-                            # Go over all the inputs to the node
-                            for i in range(con_in_len):
-                                # assuming con in as dict. get Key for first connection and return the normalized id of it
-                                normConnected1 = parent1.allNodeDict.get(node1.con_in[i]).normalized_id
-                                weightConnected1 = node1.con_in.get(node1.con_in[i])
-                                # If the connection is mutual and node2 also contains a connection to that node
-                                if node2.con_in.get(normConnected1):
-                                    weightConnected2 = node2.con_in.get(parent2.normalizedNodesDict.get(normConnected1))
-                                    if flip_coin():
-                                        child1.layerList[currentLayer].get(currentNodeIndex).con_in.update({normConnected1,weightConnected1}) = node1.con_in[i]
-                                        child2.layerList[currentLayer].get(currentNodeIndex).con_in.update({normConnected2,weightConnected2}) = node2.con_in[i]
-
-                
-
-        for linear_net1, linear_net2 in zip(parent1.linear_network, parent2.linear_network):
-            if type(linear_net1) == torch.nn.modules.linear.Linear and type(
-                    linear_net2) == torch.nn.modules.linear.Linear:
-                for node1, node2 in zip(linear_net1.weight, linear_net2.weight):
-                    for weight1, weight2 in zip(node1, node2):
-                        if flip_coin():
-                            inheritance_boolean_list_child_1.append(weight1)
-                            inheritance_boolean_list_child_2.append(weight2)
-                        else:
-                            inheritance_boolean_list_child_1.append(weight2)
-                            inheritance_boolean_list_child_2.append(weight1)
-
-        return (inheritance_boolean_list_child_1, inheritance_boolean_list_child_2)
 
 
 p1 = Evolution(150, 200, 50)

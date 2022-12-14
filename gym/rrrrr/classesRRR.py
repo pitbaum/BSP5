@@ -1,8 +1,4 @@
-dict = {}
+dict = {1:"a",2:"b"}
 
-if dict != {}:
-    print("hi")
-
-dict2 = {1:"2"}
-if dict2 != {}:
-    print("bye")
+for i in dict:
+    print(i)
