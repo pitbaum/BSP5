@@ -130,8 +130,7 @@ loop_count = 0
 # Main program loop
 while True:
     if p1.ranked_population != []:
-        for i in range(len(p1.ranked_population) - 102):
-            print(i, ":", p1.ranked_population[i][1])
+        print(loop_count, ":", p1.ranked_population[0][1])
         print("end of list")
         loop_count += 1
         if p1.ranked_population[0][1] >= 0.5:

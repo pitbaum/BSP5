@@ -2,6 +2,7 @@ import gym
 import random
 import math
 
+#Please read the README instructions about this file before attempting to launch it.
 print("Start of program")
 
 def getRandomWeight():
@@ -84,8 +85,17 @@ class FeedForwardNetwork:
         for node in self.allNodesDict.values():
             node.setValueToZero()
         # Return value of output node
-        # Put the value through tanh function before returning it
-        return getTanh(result)
+        # Put the value through tanh function
+        floatValue = getTanh(result)
+        # Evaluate to 0,1 or 2 as a value for the action space
+        if (floatValue >= -0.33 and floatValue <= 0.33):
+            floatValue = 0
+        else:
+            if (floatValue > 0.33):
+                floatValue = 2
+            else:
+                floatValue = 1
+        return floatValue
 
     # Choose a random layer and a random node in it
     # Take a random in node from it and replace it
@@ -187,7 +197,8 @@ class FeedForwardNetwork:
         current_id = 0
         new_normalized_dict = {}
         for layer in self.layerList:
-            for node in layer:
+            for nodeKey in layer:
+                node = self.allNodesDict.get(nodeKey)
                 node.normalized_id = current_id
                 new_normalized_dict.update({node.normalized_id:node})
         self.normalizedNodesDict = new_normalized_dict
@@ -206,15 +217,26 @@ class Node:
         # tuple (in node id, weight)
         # Make into dictionary from list
         self.con_in = in_list
+        # For the cross parent function and get norm con dict fucntion, use a dictionary
+        self.con_in_dict = {}
         # layer number
         self.layer_id = layer_id
         # value of the node
         self.value = 0
 
+    def getInNodeDict(self):
+        for tuple in self.con_in:
+            self.con_in_dict.update({tuple[0]:tuple[1]})
+
+    def makeInNodeList(self):
+        self.con_in = []
+        for key,value in zip(self.con_in_dict):
+            self.con_in.append((key,value))
     def get_norm_con_dict(self, allNodesDict):
         new_dict = {}
-        for key in self.con_in:
-            weight = self.con_in.get(key)
+        inDict = self.getInNodeDict()
+        for key in inDict:
+            weight = inDict.get(key)
             new_key = allNodesDict.get(key).normalized_id
             new_dict.update({new_key:weight})
         return new_dict
@@ -305,9 +327,9 @@ class Evolution:
                 currentNodeId1 = None
                 currentNodeId2 = None
                 if currentNormNodeId <= len(parent1.layerList[currentLayer]):
-                    currentNodeId1 = parent1.NormalizedNodesDict.get(currentNormNodeId).id
+                    currentNodeId1 = parent1.normalizedNodesDict.get(currentNormNodeId).id
                 if currentNormNodeId <= len(parent1.layerList[currentLayer]):
-                    currentNodeId2 = parent1.NormalizedNodesDict.get(currentNormNodeId).id
+                    currentNodeId2 = parent1.normalizedNodesDict.get(currentNormNodeId).id
                 # If this node exists for parent1 and parent2
                 if parent1.layerList[currentLayer].get(currentNodeId1) and parent2.layerList[currentLayer].get(currentNodeId2):
                     node1 = parent1.layerList[currentLayer].get(currentNodeId1)
@@ -388,7 +410,6 @@ while True:
             # take action
             # Pass the observation space, x coord and velocity to the network input
             action = agent.forward_pass(obs[0][0],obs[0][1])
-
             # apply the action
             obs = env.step(action)
             # Update the furthest the car came on the x axis
@@ -413,13 +434,9 @@ while True:
     while p1.max_generations >= len(p1.agent_list):
         parent1 = random.randint(0, (p1.survivor_population_size - 1))
         parent2 = random.randint(0, (p1.survivor_population_size - 1))
-        (child1_weights, child2_weights) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2])
-        instance1 = FeedForwardNetwork()
-        instance2 = FeedForwardNetwork()
-        instance1.inherite_weights(child1_weights, child2_weights, mutation_prop)
-        instance2.inherite_weights(child2_weights, child1_weights, mutation_prop)
-        p1.agent_list.append(instance1)
-        p1.agent_list.append(instance2)
+        (child1, child2) = p1.cross_parents(p1.agent_list[parent1], p1.agent_list[parent2],mutation_prop)
+        p1.agent_list.append(child1)
+        p1.agent_list.append(child2)
 
 """ Show the end result of the best agent that can reach the goal state"""
 final_agent = p1.ranked_population[0][0]
